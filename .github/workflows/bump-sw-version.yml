@@ -1,0 +1,32 @@
+name: Bump SW version
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app.js'
+      - 'estilos.css'
+      - 'index.html'
+      - 'manifest.webmanifest'
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Actualizar version del cache en sw.js
+        run: |
+          TIMESTAMP=$(date +%s)
+          sed -i "s/continuidad-[^\"']*/continuidad-$TIMESTAMP/" sw.js
+
+      - name: Commit y push
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add sw.js
+          git diff --staged --quiet || git commit -m "Auto-bump SW cache v$TIMESTAMP"
+          git push

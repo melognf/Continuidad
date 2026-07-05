@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Continuidad</title>
+
+  <link rel="stylesheet" href="estilos.css" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <meta name="theme-color" content="#e10600">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Continuidad">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar liquid-header">
+      <div class="liquid-bg">
+        <svg class="liquid-svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+          <path id="wave1" d="M0,160L48,149.3C96,139,192,117,288,122.7C384,128,480,160,576,176C672,192,768,192,864,170.7C960,149,1056,107,1152,101.3C1248,96,1344,128,1392,144L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+          <path id="wave2" d="M0,224L48,213.3C96,203,192,181,288,165.3C384,149,480,139,576,149.3C672,160,768,192,864,202.7C960,213,1056,203,1152,186.7C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+          <path id="wave3" d="M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,224C672,235,768,245,864,234.7C960,224,1056,192,1152,186.7C1248,181,1344,203,1392,213.3L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        </svg>
+      </div>
+
+      <div class="logo-header">
+        <img src="logo-mg.jpg" alt="Monte Grande" />
+      </div>
+
+      <div class="topbar-content">
+        <h1>Continuidad</h1>
+        <p>Llenadora · Paletizadora · Turno</p>
+      </div>
+    </header>
+
+    <main class="card">
+
+      <!-- ===== VISTA INICIALIZACIÓN ===== -->
+      <section id="vista-setup">
+        <div class="campo">
+          <label for="linea">Línea</label>
+          <select id="linea">
+            <option value="" selected disabled>Seleccionar línea</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="formato">Formato</label>
+          <select id="formato">
+            <option value="" selected disabled>Seleccionar formato</option>
+          </select>
+          <small id="info-formato">La lista cambia según la línea seleccionada.</small>
+        </div>
+
+        <div class="campo">
+          <label for="envCaja">Envases por caja</label>
+          <input type="text" id="envCaja" inputmode="numeric" autocomplete="off" placeholder="Ej: 6" />
+        </div>
+
+        <div class="campo">
+          <label for="contBotellas">Contador inicial de botellas (llenadora)</label>
+          <input type="text" id="contBotellas" inputmode="numeric" autocomplete="off" placeholder="Ej: 128400" />
+        </div>
+
+        <div class="campo">
+          <label for="contCajas">Contador inicial de cajas (etiquetadora de pallets)</label>
+          <input type="text" id="contCajas" inputmode="numeric" autocomplete="off" placeholder="Ej: 5230" />
+        </div>
+
+        <button class="btn" id="btnIniciar">Iniciar turno</button>
+      </section>
+
+      <!-- ===== VISTA ESTADO ===== -->
+      <section id="vista-estado" hidden>
+
+        <div class="turno-info">
+          <span id="turnoLineaFormato">-</span>
+          <span id="turnoInicio">-</span>
+        </div>
+
+        <div class="veredicto" id="veredicto" data-estado="espera">
+          <div class="veredicto-icono" id="veredictoIcono">⏱</div>
+          <div class="veredicto-texto" id="veredictoTexto">Esperando lectura</div>
+          <div class="veredicto-detalle" id="veredictoDetalle">Cargá los contadores para ver el estado</div>
+        </div>
+
+        <div class="lectura">
+          <div class="campo">
+            <label for="lecturaBotellas">Botellas (contador llenadora)</label>
+            <input type="text" id="lecturaBotellas" inputmode="numeric" autocomplete="off" placeholder="Contador actual" />
+          </div>
+
+          <div class="campo">
+            <label for="lecturaCajas">Cajas (contador etiquetadora de pallets)</label>
+            <input type="text" id="lecturaCajas" inputmode="numeric" autocomplete="off" placeholder="Contador actual" />
+          </div>
+
+          <button class="btn" id="btnCalcular">Ver estado</button>
+        </div>
+
+        <div class="acciones">
+          <button class="btn btn-verde" id="btnCompartir">Compartir</button>
+          <button class="btn btn-secundario" id="btnNuevoTurno">Nuevo turno</button>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js");
+    }
+  </script>
+</body>
+</html>
