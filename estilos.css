@@ -336,6 +336,14 @@ body{
   box-shadow:var(--sombra);
 }
 
+/* ===== VERSION ===== */
+.version{
+  text-align:center;
+  color:var(--muted);
+  font-size:.75rem;
+  margin:14px 0 0;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (min-width:640px){
   .card{padding:22px;}
