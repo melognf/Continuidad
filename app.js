@@ -111,7 +111,33 @@ function calcular(s) {
   const efic = teorico > 0 ? Math.max(0, Math.round((envasesSalida / teorico) * 100)) : null;
   const eficLlenadora = teorico > 0 ? Math.max(0, Math.round((botellasHechas / teorico) * 100)) : null;
 
-  return { horas, minutos, botellasHechas, cajasHechas, efic, eficLlenadora };
+  // Tramo desde la consulta anterior: refleja lo que pasó AHORA, sin que
+  // las horas buenas del principio del turno diluyan una parada reciente.
+  // Se busca la última lectura previa con al menos MIN_MINUTOS de distancia.
+  let tramo = null;
+  const previas = (s.lecturas || []).filter(l => s.ultima.ts - l.ts >= MIN_MINUTOS * 60000);
+  if (previas.length > 0) {
+    const ant = previas[previas.length - 1];
+    const tHoras = (s.ultima.ts - ant.ts) / 3600000;
+    const tTeorico = s.envasesHora * tHoras;
+    const tCajas = Math.max(0, s.ultima.cajas - ant.cajas);
+    const tBotellas = Math.max(0, s.ultima.botellas - ant.botellas);
+    tramo = {
+      minutos: Math.round(tHoras * 60),
+      cajas: tCajas,
+      efic: tTeorico > 0 ? Math.max(0, Math.round((tCajas * s.envPorCaja / tTeorico) * 100)) : null,
+      eficLlenadora: tTeorico > 0 ? Math.max(0, Math.round((tBotellas / tTeorico) * 100)) : null
+    };
+  }
+
+  return { horas, minutos, botellasHechas, cajasHechas, efic, eficLlenadora, tramo };
+}
+
+// El veredicto usa el tramo reciente si existe; si es la primera consulta
+// del turno, usa el acumulado.
+function eficVeredicto(r) {
+  if (r.tramo && r.tramo.efic !== null) return r.tramo.efic;
+  return r.efic;
 }
 
 /* ================= Render ================= */
@@ -150,15 +176,23 @@ function render() {
     return;
   }
 
-  const ok = r.efic >= s.umbral;
+  const eficBase = eficVeredicto(r);
+  const ok = eficBase >= s.umbral;
   box.dataset.estado = ok ? "ok" : "mal";
   $("campoProblema").hidden = ok;
   $("problema").value = s.nota || "";
   icono.textContent = ok ? "✔" : "✖";
   texto.textContent = ok ? "Línea corriendo con continuidad" : "Línea con necesidades";
-  detalle.textContent =
-    `Eficiencia ${r.efic}% · umbral ${s.umbral}% · ${r.minutos} min` +
-    ` · llenadora ${r.eficLlenadora}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`;
+
+  if (r.tramo && r.tramo.efic !== null) {
+    detalle.textContent =
+      `Últimos ${r.tramo.minutos} min: ${r.tramo.efic}% · umbral ${s.umbral}%` +
+      ` · turno completo ${r.efic}% · llenadora ${r.tramo.eficLlenadora}%`;
+  } else {
+    detalle.textContent =
+      `Eficiencia ${r.efic}% · umbral ${s.umbral}% · ${r.minutos} min` +
+      ` · llenadora ${r.eficLlenadora}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`;
+  }
 }
 
 /* ================= Acciones ================= */
@@ -194,7 +228,8 @@ $("btnIniciar").addEventListener("click", () => {
     contadorInicialBotellas: contB,
     contadorInicialCajas: contC,
     horaInicio: Date.now(),
-    ultima: null
+    ultima: null,
+    lecturas: []
   });
   render();
 });
@@ -208,6 +243,10 @@ $("btnCalcular").addEventListener("click", () => {
   marcarInvalido($("lecturaCajas"), isNaN(c));
   if (isNaN(b) || isNaN(c)) return;
 
+  if (s.ultima) {
+    s.lecturas = s.lecturas || [];
+    s.lecturas.push(s.ultima);
+  }
   s.ultima = { botellas: b, cajas: c, ts: Date.now() };
   guardarEstado(s);
   render();
@@ -277,11 +316,17 @@ function generarImagen(s, r, ok, nota) {
   y += 20;
   ctx.font = "600 46px system-ui, Arial";
   ctx.fillStyle = "rgba(255,255,255,.92)";
-  const detalles = [
-    `Eficiencia ${r.efic}% · umbral ${s.umbral}%`,
-    `Llenadora ${r.eficLlenadora}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`,
-    `Tiempo de turno: ${r.minutos} min`
-  ];
+  const detalles = (r.tramo && r.tramo.efic !== null)
+    ? [
+        `Últimos ${r.tramo.minutos} min: ${r.tramo.efic}% · umbral ${s.umbral}%`,
+        `Turno completo: ${r.efic}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`,
+        `Llenadora ${r.tramo.eficLlenadora}% · ${r.minutos} min de turno`
+      ]
+    : [
+        `Eficiencia ${r.efic}% · umbral ${s.umbral}%`,
+        `Llenadora ${r.eficLlenadora}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`,
+        `Tiempo de turno: ${r.minutos} min`
+      ];
   detalles.forEach(d => { ctx.fillText(d, W / 2, y); y += 62; });
 
   if (!ok && nota) {
@@ -314,12 +359,18 @@ function generarImagen(s, r, ok, nota) {
 function mensajeTexto(s, r, ok, nota) {
   const lineas = [
     `${s.linea} - ${s.formatoNombre} - ${fmtHora(Date.now())}`,
-    ok ? "LÍNEA CORRIENDO CON CONTINUIDAD ✅" : "LÍNEA CON NECESIDADES ❌",
-    `Eficiencia: ${r.efic}% (umbral ${s.umbral}%)`,
-    `Llenadora: ${r.eficLlenadora}%`,
-    `Cajas del turno: ${r.cajasHechas}`,
-    `Tiempo de turno: ${r.minutos} min`
+    ok ? "LÍNEA CORRIENDO CON CONTINUIDAD ✅" : "LÍNEA CON NECESIDADES ❌"
   ];
+  if (r.tramo && r.tramo.efic !== null) {
+    lineas.push(`Últimos ${r.tramo.minutos} min: ${r.tramo.efic}% (umbral ${s.umbral}%)`);
+    lineas.push(`Turno completo: ${r.efic}%`);
+    lineas.push(`Llenadora: ${r.tramo.eficLlenadora}%`);
+  } else {
+    lineas.push(`Eficiencia: ${r.efic}% (umbral ${s.umbral}%)`);
+    lineas.push(`Llenadora: ${r.eficLlenadora}%`);
+  }
+  lineas.push(`Cajas del turno: ${r.cajasHechas}`);
+  lineas.push(`Tiempo de turno: ${r.minutos} min`);
   if (!ok && nota) lineas.push(`Problemas: ${nota}`);
   return lineas.join("\n");
 }
@@ -330,7 +381,7 @@ $("btnCompartir").addEventListener("click", () => {
   const r = calcular(s);
   if (r.efic === null || r.minutos < MIN_MINUTOS) return;
 
-  const ok = r.efic >= s.umbral;
+  const ok = eficVeredicto(r) >= s.umbral;
   const nota = ($("problema").value || "").trim();
   const canvas = generarImagen(s, r, ok, nota);
 
