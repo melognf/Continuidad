@@ -24,7 +24,7 @@ const CATALOGO = {
     { nombre: "0.3 L", envasesHora: 16980 },
     { nombre: "0.5 L", envasesHora: 19200 },
     { nombre: "0.591 L", envasesHora: 19200 },
-    { nombre: "0.6 L", envasesHora: 19200 },
+    { nombre: "0.6 L", envasesHora: 18600 },
     { nombre: "0.991 L", envasesHora: 13980 },
     { nombre: "1.5 L", envasesHora: 10800 },
     { nombre: "2.25 L", envasesHora: 9000 }
@@ -35,7 +35,7 @@ const CATALOGO = {
   ]}
 };
 
-const APP_VERSION = "1.4"; // subir en cada cambio funcional
+const APP_VERSION = "1.5"; // subir en cada cambio funcional
 const STORAGE_KEY = "continuidad_turno_v1";
 const MIN_MINUTOS = 5; // con menos tiempo de turno el % no es representativo
 
@@ -141,6 +141,14 @@ function eficVeredicto(r) {
   return r.efic;
 }
 
+// Valores vigentes de salida y llenadora (tramo si existe, sino acumulado).
+function eficVigentes(r) {
+  if (r.tramo && r.tramo.efic !== null) {
+    return { salida: r.tramo.efic, llenadora: r.tramo.eficLlenadora };
+  }
+  return { salida: r.efic, llenadora: r.eficLlenadora };
+}
+
 /* ================= Render ================= */
 
 function render() {
@@ -163,6 +171,7 @@ function render() {
     texto.textContent = "Esperando lectura";
     detalle.textContent = "Cargá los contadores para ver el estado";
     $("campoProblema").hidden = true;
+    $("chips").hidden = true;
     return;
   }
 
@@ -174,6 +183,7 @@ function render() {
     texto.textContent = "Muy poco tiempo de turno";
     detalle.textContent = "Esperá unos minutos y volvé a cargar";
     $("campoProblema").hidden = true;
+    $("chips").hidden = true;
     return;
   }
 
@@ -184,6 +194,11 @@ function render() {
   $("problema").value = s.nota || "";
   icono.textContent = ok ? "✔" : "✖";
   texto.textContent = ok ? "Línea corriendo con continuidad" : "Línea con necesidades";
+
+  const v = eficVigentes(r);
+  $("chips").hidden = false;
+  setChip($("chipLlenadora"), "Llenadora", v.llenadora, s.umbral);
+  setChip($("chipSalida"), "Salida", v.salida, s.umbral);
 
   if (r.tramo && r.tramo.efic !== null) {
     detalle.textContent =
@@ -197,6 +212,12 @@ function render() {
 }
 
 /* ================= Acciones ================= */
+
+function setChip(el, label, valor, umbral) {
+  el.textContent = `${label} ${valor}%`;
+  el.classList.toggle("ok", valor >= umbral);
+  el.classList.toggle("mal", valor < umbral);
+}
 
 function marcarInvalido(input, esInvalido) {
   input.classList.toggle("invalido", esInvalido);
@@ -305,16 +326,42 @@ function generarImagen(s, r, ok, nota) {
   ctx.fillText(`Inicio ${fmtHora(s.horaInicio)} → ${fmtHora(s.ultima.ts)}`, W - 48, 82);
 
   ctx.textAlign = "center";
-  ctx.font = "900 170px system-ui, Arial";
-  ctx.fillText(ok ? "✓" : "✕", W / 2, 350);
+  ctx.font = "900 150px system-ui, Arial";
+  ctx.fillText(ok ? "✓" : "✕", W / 2, 310);
 
   ctx.font = "900 78px system-ui, Arial";
   const titulo = ok ? "LÍNEA CORRIENDO CON CONTINUIDAD" : "LÍNEA CON NECESIDADES";
   const lineasTitulo = partirLineas(ctx, titulo, W - 140);
-  let y = 470;
+  let y = 430;
   lineasTitulo.forEach(l => { ctx.fillText(l, W / 2, y); y += 92; });
 
-  y += 20;
+  const v = eficVigentes(r);
+  ctx.font = "800 44px system-ui, Arial";
+  const chips = [
+    { t: `LLENADORA ${v.llenadora}%`, ok: v.llenadora >= s.umbral },
+    { t: `SALIDA ${v.salida}%`, ok: v.salida >= s.umbral }
+  ];
+  const anchos = chips.map(c => ctx.measureText(c.t).width + 70);
+  const gapChips = 24;
+  let cx = (W - (anchos[0] + anchos[1] + gapChips)) / 2;
+  y += 4;
+  chips.forEach((c, i) => {
+    const wc = anchos[i], hc = 84;
+    ctx.fillStyle = "#ffffff";
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(cx, y, wc, hc, 42);
+      ctx.fill();
+    } else {
+      ctx.fillRect(cx, y, wc, hc);
+    }
+    ctx.fillStyle = c.ok ? "#15803d" : "#b80000";
+    ctx.fillText(c.t, cx + wc / 2, y + 58);
+    cx += wc + gapChips;
+  });
+  y += 84 + 50;
+
+  ctx.font = "600 46px system-ui, Arial";
   ctx.font = "600 46px system-ui, Arial";
   ctx.fillStyle = "rgba(255,255,255,.92)";
   const detalles = (r.tramo && r.tramo.efic !== null)
