@@ -23,7 +23,7 @@ const CATALOGO = {
   "LÍNEA 3": { umbral: 63, formatos: [
     { nombre: "0.3 L", envasesHora: 16980 },
     { nombre: "0.5 L", envasesHora: 19200 },
-    { nombre: "0.591 L", envasesHora: 19200 },
+    { nombre: "0.591 L", envasesHora: 18600 },
     { nombre: "0.6 L", envasesHora: 18600 },
     { nombre: "0.991 L", envasesHora: 13980 },
     { nombre: "1.5 L", envasesHora: 10800 },
@@ -35,7 +35,7 @@ const CATALOGO = {
   ]}
 };
 
-const APP_VERSION = "1.5"; // subir en cada cambio funcional
+const APP_VERSION = "1.5.1"; // subir en cada cambio funcional
 const STORAGE_KEY = "continuidad_turno_v1";
 const MIN_MINUTOS = 5; // con menos tiempo de turno el % no es representativo
 
