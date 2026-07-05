@@ -135,6 +135,7 @@ function render() {
     icono.textContent = "⏱";
     texto.textContent = "Esperando lectura";
     detalle.textContent = "Cargá los contadores para ver el estado";
+    $("campoProblema").hidden = true;
     return;
   }
 
@@ -145,11 +146,14 @@ function render() {
     icono.textContent = "⏱";
     texto.textContent = "Muy poco tiempo de turno";
     detalle.textContent = "Esperá unos minutos y volvé a cargar";
+    $("campoProblema").hidden = true;
     return;
   }
 
   const ok = r.efic >= s.umbral;
   box.dataset.estado = ok ? "ok" : "mal";
+  $("campoProblema").hidden = ok;
+  $("problema").value = s.nota || "";
   icono.textContent = ok ? "✔" : "✖";
   texto.textContent = ok ? "Línea corriendo con continuidad" : "Línea con necesidades";
   detalle.textContent =
@@ -218,25 +222,131 @@ $("btnNuevoTurno").addEventListener("click", () => {
   render();
 });
 
+$("problema").addEventListener("input", () => {
+  const s = cargarEstado();
+  if (!s) return;
+  s.nota = $("problema").value;
+  guardarEstado(s);
+});
+
+/* ================= Imagen para compartir ================= */
+
+function partirLineas(ctx, texto, anchoMax) {
+  const palabras = texto.split(/\s+/);
+  const lineas = [];
+  let actual = "";
+  palabras.forEach(p => {
+    const prueba = actual ? actual + " " + p : p;
+    if (ctx.measureText(prueba).width <= anchoMax || !actual) actual = prueba;
+    else { lineas.push(actual); actual = p; }
+  });
+  if (actual) lineas.push(actual);
+  return lineas;
+}
+
+function generarImagen(s, r, ok, nota) {
+  const W = 1080, H = 1080;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = ok ? "#16a34a" : "#e10600";
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "rgba(0,0,0,.28)";
+  ctx.fillRect(0, 0, W, 130);
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "left";
+  ctx.font = "700 42px system-ui, Arial";
+  ctx.fillText(`${s.linea} · ${s.formatoNombre}`, 48, 82);
+  ctx.textAlign = "right";
+  ctx.font = "600 36px system-ui, Arial";
+  ctx.fillText(`Inicio ${fmtHora(s.horaInicio)} → ${fmtHora(s.ultima.ts)}`, W - 48, 82);
+
+  ctx.textAlign = "center";
+  ctx.font = "900 170px system-ui, Arial";
+  ctx.fillText(ok ? "✓" : "✕", W / 2, 350);
+
+  ctx.font = "900 78px system-ui, Arial";
+  const titulo = ok ? "LÍNEA CORRIENDO CON CONTINUIDAD" : "LÍNEA CON NECESIDADES";
+  const lineasTitulo = partirLineas(ctx, titulo, W - 140);
+  let y = 470;
+  lineasTitulo.forEach(l => { ctx.fillText(l, W / 2, y); y += 92; });
+
+  y += 20;
+  ctx.font = "600 46px system-ui, Arial";
+  ctx.fillStyle = "rgba(255,255,255,.92)";
+  const detalles = [
+    `Eficiencia ${r.efic}% · umbral ${s.umbral}%`,
+    `Llenadora ${r.eficLlenadora}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`,
+    `Tiempo de turno: ${r.minutos} min`
+  ];
+  detalles.forEach(d => { ctx.fillText(d, W / 2, y); y += 62; });
+
+  if (!ok && nota) {
+    ctx.font = "600 42px system-ui, Arial";
+    const lineasNota = partirLineas(ctx, nota, W - 220);
+    const altoCaja = 90 + lineasNota.length * 54;
+    const yCaja = Math.min(y + 20, H - altoCaja - 60);
+
+    ctx.fillStyle = "rgba(255,255,255,.96)";
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(70, yCaja, W - 140, altoCaja, 24);
+      ctx.fill();
+    } else {
+      ctx.fillRect(70, yCaja, W - 140, altoCaja);
+    }
+
+    ctx.fillStyle = "#991b1b";
+    ctx.font = "800 36px system-ui, Arial";
+    ctx.fillText("PROBLEMAS", W / 2, yCaja + 56);
+    ctx.fillStyle = "#1f2937";
+    ctx.font = "600 42px system-ui, Arial";
+    let yNota = yCaja + 116;
+    lineasNota.forEach(l => { ctx.fillText(l, W / 2, yNota); yNota += 54; });
+  }
+
+  return canvas;
+}
+
+function mensajeTexto(s, r, ok, nota) {
+  const lineas = [
+    `${s.linea} - ${s.formatoNombre} - ${fmtHora(Date.now())}`,
+    ok ? "LÍNEA CORRIENDO CON CONTINUIDAD ✅" : "LÍNEA CON NECESIDADES ❌",
+    `Eficiencia: ${r.efic}% (umbral ${s.umbral}%)`,
+    `Llenadora: ${r.eficLlenadora}%`,
+    `Cajas del turno: ${r.cajasHechas}`,
+    `Tiempo de turno: ${r.minutos} min`
+  ];
+  if (!ok && nota) lineas.push(`Problemas: ${nota}`);
+  return lineas.join("\n");
+}
+
 $("btnCompartir").addEventListener("click", () => {
   const s = cargarEstado();
   if (!s || !s.ultima) return;
   const r = calcular(s);
+  if (r.efic === null || r.minutos < MIN_MINUTOS) return;
 
-  let estado;
-  if (r.efic === null || r.minutos < MIN_MINUTOS) estado = "Muy poco tiempo de turno";
-  else estado = r.efic >= s.umbral ? "LÍNEA CORRIENDO CON CONTINUIDAD ✅" : "LÍNEA CON NECESIDADES ❌";
+  const ok = r.efic >= s.umbral;
+  const nota = ($("problema").value || "").trim();
+  const canvas = generarImagen(s, r, ok, nota);
 
-  const msg = [
-    `${s.linea} - ${s.formatoNombre} - ${fmtHora(Date.now())}`,
-    estado,
-    `Eficiencia: ${r.efic === null ? "-" : r.efic + "%"} (umbral ${s.umbral}%)`,
-    `Llenadora: ${r.eficLlenadora === null ? "-" : r.eficLlenadora + "%"}`,
-    `Cajas del turno: ${r.cajasHechas}`,
-    `Tiempo de turno: ${r.minutos} min`
-  ].join("\n");
-
-  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+  canvas.toBlob(async blob => {
+    const file = new File([blob], "continuidad.png", { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        return;
+      } catch (e) {
+        if (e.name === "AbortError") return;
+      }
+    }
+    // Sin soporte para compartir imagen (ej: PC): texto por WhatsApp Web.
+    window.open("https://wa.me/?text=" + encodeURIComponent(mensajeTexto(s, r, ok, nota)), "_blank");
+  }, "image/png");
 });
 
 /* ================= Init ================= */

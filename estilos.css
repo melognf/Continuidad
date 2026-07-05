@@ -166,7 +166,8 @@ body{
 }
 
 .campo input,
-.campo select{
+.campo select,
+.campo textarea{
   width:100%;
   border:1.5px solid var(--borde);
   border-radius:var(--radio);
@@ -181,8 +182,15 @@ body{
   appearance:none;
 }
 
+.campo textarea{
+  resize:vertical;
+  min-height:84px;
+  font-family:inherit;
+}
+
 .campo input:focus,
-.campo select:focus{
+.campo select:focus,
+.campo textarea:focus{
   border-color:var(--rojo);
   box-shadow:0 0 0 3px rgba(225,6,0,.14);
   transform:translateY(-1px);
