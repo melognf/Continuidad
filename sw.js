@@ -1,4 +1,4 @@
-const CACHE_NAME = "continuidad-1783275478";
+const CACHE_NAME = "continuidad-1783282275";
 
 const FILES_TO_CACHE = [
   "./",
