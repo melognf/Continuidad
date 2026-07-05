@@ -35,7 +35,7 @@ const CATALOGO = {
   ]}
 };
 
-const APP_VERSION = "1.3"; // subir en cada cambio funcional
+const APP_VERSION = "1.3.1"; // subir en cada cambio funcional
 const STORAGE_KEY = "continuidad_turno_v1";
 const MIN_MINUTOS = 5; // con menos tiempo de turno el % no es representativo
 
@@ -403,6 +403,7 @@ $("btnCompartir").addEventListener("click", () => {
 
 /* ================= Init ================= */
 
-document.getElementById("appVersion").textContent = "Continuidad v" + APP_VERSION;
+const versionEl = document.getElementById("appVersion");
+if (versionEl) versionEl.textContent = "Continuidad v" + APP_VERSION;
 poblarLineas();
 render();
