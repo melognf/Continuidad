@@ -35,7 +35,7 @@ const CATALOGO = {
   ]}
 };
 
-const APP_VERSION = "1.3.1"; // subir en cada cambio funcional
+const APP_VERSION = "1.4"; // subir en cada cambio funcional
 const STORAGE_KEY = "continuidad_turno_v1";
 const MIN_MINUTOS = 5; // con menos tiempo de turno el % no es representativo
 
@@ -187,11 +187,11 @@ function render() {
 
   if (r.tramo && r.tramo.efic !== null) {
     detalle.textContent =
-      `Últimos ${r.tramo.minutos} min: ${r.tramo.efic}% · umbral ${s.umbral}%` +
-      ` · turno completo ${r.efic}% · llenadora ${r.tramo.eficLlenadora}%`;
+      `Salida últimos ${r.tramo.minutos} min: ${r.tramo.efic}% · umbral ${s.umbral}%` +
+      ` · salida turno ${r.efic}% · llenadora ${r.tramo.eficLlenadora}%`;
   } else {
     detalle.textContent =
-      `Eficiencia ${r.efic}% · umbral ${s.umbral}% · ${r.minutos} min` +
+      `Salida del turno: ${r.efic}% · umbral ${s.umbral}% · ${r.minutos} min` +
       ` · llenadora ${r.eficLlenadora}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`;
   }
 }
@@ -319,12 +319,12 @@ function generarImagen(s, r, ok, nota) {
   ctx.fillStyle = "rgba(255,255,255,.92)";
   const detalles = (r.tramo && r.tramo.efic !== null)
     ? [
-        `Últimos ${r.tramo.minutos} min: ${r.tramo.efic}% · umbral ${s.umbral}%`,
-        `Turno completo: ${r.efic}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`,
+        `Salida últimos ${r.tramo.minutos} min: ${r.tramo.efic}% · umbral ${s.umbral}%`,
+        `Salida turno completo: ${r.efic}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`,
         `Llenadora ${r.tramo.eficLlenadora}% · ${r.minutos} min de turno`
       ]
     : [
-        `Eficiencia ${r.efic}% · umbral ${s.umbral}%`,
+        `Salida del turno: ${r.efic}% · umbral ${s.umbral}%`,
         `Llenadora ${r.eficLlenadora}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`,
         `Tiempo de turno: ${r.minutos} min`
       ];
@@ -363,11 +363,11 @@ function mensajeTexto(s, r, ok, nota) {
     ok ? "LÍNEA CORRIENDO CON CONTINUIDAD ✅" : "LÍNEA CON NECESIDADES ❌"
   ];
   if (r.tramo && r.tramo.efic !== null) {
-    lineas.push(`Últimos ${r.tramo.minutos} min: ${r.tramo.efic}% (umbral ${s.umbral}%)`);
-    lineas.push(`Turno completo: ${r.efic}%`);
-    lineas.push(`Llenadora: ${r.tramo.eficLlenadora}%`);
+    lineas.push(`Salida últimos ${r.tramo.minutos} min: ${r.tramo.efic}% (umbral ${s.umbral}%)`);
+    lineas.push(`Salida turno completo: ${r.efic}%`);
+    lineas.push(`Llenadora últimos ${r.tramo.minutos} min: ${r.tramo.eficLlenadora}%`);
   } else {
-    lineas.push(`Eficiencia: ${r.efic}% (umbral ${s.umbral}%)`);
+    lineas.push(`Salida del turno: ${r.efic}% (umbral ${s.umbral}%)`);
     lineas.push(`Llenadora: ${r.eficLlenadora}%`);
   }
   lineas.push(`Cajas del turno: ${r.cajasHechas}`);
