@@ -35,7 +35,7 @@ const CATALOGO = {
   ]}
 };
 
-const APP_VERSION = "1.5.1"; // subir en cada cambio funcional
+const APP_VERSION = "1.5.2"; // subir en cada cambio funcional
 const STORAGE_KEY = "continuidad_turno_v1";
 const MIN_MINUTOS = 5; // con menos tiempo de turno el % no es representativo
 
@@ -206,7 +206,7 @@ function render() {
       ` · salida turno ${r.efic}% · llenadora ${r.tramo.eficLlenadora}%`;
   } else {
     detalle.textContent =
-      `Salida del turno: ${r.efic}% · umbral ${s.umbral}% · ${r.minutos} min` +
+      `Salida de paletizadora: ${r.efic}% · umbral ${s.umbral}% · ${r.minutos} min` +
       ` · llenadora ${r.eficLlenadora}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`;
   }
 }
@@ -371,7 +371,7 @@ function generarImagen(s, r, ok, nota) {
         `Llenadora ${r.tramo.eficLlenadora}% · ${r.minutos} min de turno`
       ]
     : [
-        `Salida del turno: ${r.efic}% · umbral ${s.umbral}%`,
+        `Salida de paletizadora: ${r.efic}% · umbral ${s.umbral}%`,
         `Llenadora ${r.eficLlenadora}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`,
         `Tiempo de turno: ${r.minutos} min`
       ];
@@ -414,7 +414,7 @@ function mensajeTexto(s, r, ok, nota) {
     lineas.push(`Salida turno completo: ${r.efic}%`);
     lineas.push(`Llenadora últimos ${r.tramo.minutos} min: ${r.tramo.eficLlenadora}%`);
   } else {
-    lineas.push(`Salida del turno: ${r.efic}% (umbral ${s.umbral}%)`);
+    lineas.push(`Salida de paletizadora: ${r.efic}% (umbral ${s.umbral}%)`);
     lineas.push(`Llenadora: ${r.eficLlenadora}%`);
   }
   lineas.push(`Cajas del turno: ${r.cajasHechas}`);
