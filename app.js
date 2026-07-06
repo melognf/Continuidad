@@ -35,7 +35,7 @@ const CATALOGO = {
   ]}
 };
 
-const APP_VERSION = "1.5.2"; // subir en cada cambio funcional
+const APP_VERSION = "1.5.3"; // subir en cada cambio funcional
 const STORAGE_KEY = "continuidad_turno_v1";
 const MIN_MINUTOS = 5; // con menos tiempo de turno el % no es representativo
 
@@ -368,12 +368,12 @@ function generarImagen(s, r, ok, nota) {
     ? [
         `Salida últimos ${r.tramo.minutos} min: ${r.tramo.efic}% · umbral ${s.umbral}%`,
         `Salida turno completo: ${r.efic}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`,
-        `Llenadora ${r.tramo.eficLlenadora}% · ${r.minutos} min de turno`
+        `Cajas de la consulta: ${r.tramo.cajas.toLocaleString("es-AR")} · ${r.tramo.minutos} min`
       ]
     : [
         `Salida de paletizadora: ${r.efic}% · umbral ${s.umbral}%`,
         `Llenadora ${r.eficLlenadora}% · ${r.cajasHechas.toLocaleString("es-AR")} cajas`,
-        `Tiempo de turno: ${r.minutos} min`
+        `Tiempo de la consulta: ${r.minutos} min`
       ];
   detalles.forEach(d => { ctx.fillText(d, W / 2, y); y += 62; });
 
@@ -413,12 +413,14 @@ function mensajeTexto(s, r, ok, nota) {
     lineas.push(`Salida últimos ${r.tramo.minutos} min: ${r.tramo.efic}% (umbral ${s.umbral}%)`);
     lineas.push(`Salida turno completo: ${r.efic}%`);
     lineas.push(`Llenadora últimos ${r.tramo.minutos} min: ${r.tramo.eficLlenadora}%`);
+    lineas.push(`Cajas de la consulta: ${r.tramo.cajas}`);
+    lineas.push(`Tiempo de la consulta: ${r.tramo.minutos} min`);
   } else {
     lineas.push(`Salida de paletizadora: ${r.efic}% (umbral ${s.umbral}%)`);
     lineas.push(`Llenadora: ${r.eficLlenadora}%`);
+    lineas.push(`Cajas de la consulta: ${r.cajasHechas}`);
+    lineas.push(`Tiempo de la consulta: ${r.minutos} min`);
   }
-  lineas.push(`Cajas del turno: ${r.cajasHechas}`);
-  lineas.push(`Tiempo de turno: ${r.minutos} min`);
   if (!ok && nota) lineas.push(`Problemas: ${nota}`);
   return lineas.join("\n");
 }
